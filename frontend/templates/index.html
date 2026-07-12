@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MES — Honda Celaya</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+    <div class="navbar-brand">
+        <div class="logo">H</div>
+        <div>
+            <h1>MES Honda Celaya</h1>
+            <span>Sistema de Ejecución de Manufactura</span>
+        </div>
+    </div>
+    <div class="navbar-right">
+        <div class="status-indicator">
+            <div class="status-dot"></div>
+            <span id="last-update">Conectando...</span>
+        </div>
+        <button class="btn-refresh" onclick="cargarDashboard();cargarOrdenes()">
+            ↻ Refrescar
+        </button>
+    </div>
+</nav>
+
+<div class="main-container">
+
+    <!-- KPIs ÓRDENES -->
+    <p class="section-title">Órdenes de Producción</p>
+    <div class="kpi-grid">
+        <div class="kpi-card blue">
+            <div class="kpi-label">Total Órdenes</div>
+            <div class="kpi-value" id="kpi-total">—</div>
+            <div class="kpi-sub">registradas en el sistema</div>
+            <div class="kpi-icon">📋</div>
+        </div>
+        <div class="kpi-card orange">
+            <div class="kpi-label">En Proceso</div>
+            <div class="kpi-value" id="kpi-proceso">—</div>
+            <div class="kpi-sub">órdenes activas ahora</div>
+            <div class="kpi-icon">⚙️</div>
+        </div>
+        <div class="kpi-card green">
+            <div class="kpi-label">Completadas</div>
+            <div class="kpi-value" id="kpi-completadas">—</div>
+            <div class="kpi-sub">órdenes finalizadas</div>
+            <div class="kpi-icon">✅</div>
+        </div>
+        <div class="kpi-card green">
+            <div class="kpi-label">Unidades Producidas</div>
+            <div class="kpi-value" id="kpi-producidas">—</div>
+            <div class="kpi-sub">total acumulado</div>
+            <div class="kpi-icon">🏭</div>
+        </div>
+        <div class="kpi-card blue">
+            <div class="kpi-label">Unidades Buenas</div>
+            <div class="kpi-value" id="kpi-buenas">—</div>
+            <div class="kpi-sub">aprobadas en calidad</div>
+            <div class="kpi-icon">⭐</div>
+        </div>
+        <div class="kpi-card red">
+            <div class="kpi-label">Defectos</div>
+            <div class="kpi-value" id="kpi-defectos">—</div>
+            <div class="kpi-sub">unidades rechazadas</div>
+            <div class="kpi-icon">⚠️</div>
+        </div>
+    </div>
+
+    <!-- GRÁFICAS -->
+    <p class="section-title">Análisis en Tiempo Real</p>
+    <div class="charts-grid">
+
+        <!-- OEE -->
+        <div class="chart-card">
+            <h3>OEE Global — Overall Equipment Effectiveness</h3>
+            <div class="oee-container">
+                <div class="gauge-wrapper">
+                    <canvas id="gauge-canvas" width="200" height="110"></canvas>
+                    <div class="gauge-label">
+                        <div class="value" id="oee-valor">—</div>
+                        <div class="unit">OEE</div>
+                    </div>
+                </div>
+                <span class="oee-badge" id="oee-badge">—</span>
+                <div class="oee-breakdown">
+                    <div class="oee-factor">
+                        <div class="factor-label">Disponibilidad</div>
+                        <div class="factor-value" id="oee-disponibilidad" style="color:#4cc9f0">—</div>
+                    </div>
+                    <div class="oee-factor">
+                        <div class="factor-label">Rendimiento</div>
+                        <div class="factor-value" id="oee-rendimiento" style="color:#f4a261">—</div>
+                    </div>
+                    <div class="oee-factor">
+                        <div class="factor-label">Calidad</div>
+                        <div class="factor-value" id="oee-calidad" style="color:#00d4aa">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Historial OEE -->
+        <div class="chart-card">
+            <h3>Historial OEE — Tendencia del turno</h3>
+            <canvas id="chart-linea" width="400" height="220"
+                style="width:100%;height:220px"></canvas>
+        </div>
+
+        <!-- Producción por máquina -->
+        <div class="chart-card" style="grid-column: 1 / -1">
+            <h3>Producción por Máquina — Buenas vs Defectuosas</h3>
+            <canvas id="chart-barras" width="800" height="200"
+                style="width:100%;height:200px"></canvas>
+        </div>
+
+    </div>
+
+    <!-- TABLA DE ÓRDENES -->
+    <div class="table-card">
+        <div class="table-header">
+            <h3>Órdenes de Producción</h3>
+            <button class="btn-new" onclick="abrirModalOrden()">+ Nueva Orden</button>
+        </div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>N° Orden</th>
+                        <th>Producto</th>
+                        <th>Turno</th>
+                        <th>Progreso</th>
+                        <th>Defectos</th>
+                        <th>Estado</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-ordenes">
+                    <tr><td colspan="7" style="text-align:center;color:var(--text-secondary);padding:2rem">
+                        Cargando órdenes...
+                    </td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- MODAL: NUEVA ORDEN -->
+<div class="modal-overlay" id="modal-orden">
+    <div class="modal">
+        <h2>Nueva Orden de Producción</h2>
+        <div id="form-orden">
+            <div class="form-group">
+                <label>Número de Orden</label>
+                <input id="inp-numero" type="text" placeholder="ORD-2024-001">
+            </div>
+            <div class="form-group">
+                <label>Producto</label>
+                <input id="inp-producto" type="text" placeholder="Acura ADX — Panel Lateral">
+            </div>
+            <div class="form-group">
+                <label>Unidades Objetivo</label>
+                <input id="inp-objetivo" type="number" placeholder="120" min="1">
+            </div>
+            <div class="form-group">
+                <label>Turno</label>
+                <select id="inp-turno">
+                    <option value="Matutino">Matutino (6am - 2pm)</option>
+                    <option value="Vespertino">Vespertino (2pm - 10pm)</option>
+                    <option value="Nocturno">Nocturno (10pm - 6am)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Máquina / Estación</label>
+                <select id="select-maquina">
+                    <option value="">Cargando máquinas...</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="cerrarModalOrden()">Cancelar</button>
+            <button class="btn-submit" onclick="crearOrden()">Crear Orden</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: ACTUALIZAR ORDEN -->
+<div class="modal-overlay" id="modal-actualizar">
+    <div class="modal">
+        <h2>Actualizar Avance de Orden</h2>
+        <div class="form-group">
+            <label>Unidades Producidas</label>
+            <input id="upd-producidas" type="number" min="0">
+        </div>
+        <div class="form-group">
+            <label>Unidades Defectuosas</label>
+            <input id="upd-defectuosas" type="number" min="0">
+        </div>
+        <div class="form-group">
+            <label>Estado</label>
+            <select id="upd-estado">
+                <option value="pendiente">Pendiente</option>
+                <option value="en_proceso">En Proceso</option>
+                <option value="completada">Completada</option>
+                <option value="cancelada">Cancelada</option>
+            </select>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="cerrarModalActualizar()">Cancelar</button>
+            <button class="btn-submit" onclick="actualizarOrden()">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="/static/js/dashboard.js"></script>
+</body>
+</html>
