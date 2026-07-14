@@ -386,3 +386,140 @@ function mostrarToast(msg, tipo = 'success') {
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 3000);
 }
+
+
+// ===== SISTEMA DE ALERTAS (WebSocket) =====
+let wsAlertas = null;
+let alertasActivas = {};
+
+function conectarWebSocket() {
+    wsAlertas = new WebSocket('ws://localhost:8000/alertas/ws');
+
+    wsAlertas.onopen = () => {
+        document.getElementById('ws-dot').className = 'ws-dot conectado';
+        document.getElementById('ws-estado').textContent = 'Tiempo real activo';
+    };
+
+    wsAlertas.onclose = () => {
+        document.getElementById('ws-dot').className = 'ws-dot';
+        document.getElementById('ws-estado').textContent = 'Reconectando...';
+        setTimeout(conectarWebSocket, 4000);
+    };
+
+    wsAlertas.onerror = () => {
+        document.getElementById('ws-estado').textContent = 'Sin conexión WS';
+    };
+
+    wsAlertas.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        if (data.evento === 'alertas_iniciales') {
+            alertasActivas = {};
+            data.alertas.forEach(a => { alertasActivas[a.id] = a; });
+            renderizarAlertas();
+        }
+
+        if (data.evento === 'nueva_alerta') {
+            alertasActivas[data.id] = data;
+            renderizarAlertas();
+            mostrarToastAlerta(data);
+        }
+    };
+}
+
+function renderizarAlertas() {
+    const lista = document.getElementById('alertas-lista');
+    const alertas = Object.values(alertasActivas).sort(
+        (a, b) => new Date(b.creada_en) - new Date(a.creada_en)
+    );
+
+    const badge = document.getElementById('badge-alertas');
+    badge.textContent = alertas.length;
+    badge.className = 'badge-contador' + (alertas.length > 0 ? ' visible' : '');
+
+    if (alertas.length === 0) {
+        lista.innerHTML = `
+            <div class="alertas-vacio">
+                ✅ Sin alertas activas — Sistema operando normalmente
+            </div>`;
+        return;
+    }
+
+    const iconos = {
+        critica: '🔴',
+        advertencia: '🟡',
+        info: '🔵'
+    };
+
+    const tiposLabel = {
+        oee_bajo: 'OEE Bajo',
+        defectos_alto: 'Defectos',
+        orden_detenida: 'Orden Detenida',
+        calidad_baja: 'Calidad',
+        rendimiento_bajo: 'Rendimiento'
+    };
+
+    lista.innerHTML = alertas.map(a => `
+        <div class="alerta-item ${a.severidad}" id="alerta-${a.id}">
+            <div class="alerta-icono">${iconos[a.severidad] || '⚪'}</div>
+            <div class="alerta-body">
+                <div class="alerta-mensaje">${a.mensaje}</div>
+                ${a.detalle ? `<div class="alerta-detalle">${a.detalle}</div>` : ''}
+                <div class="alerta-meta">
+                    <span class="alerta-tipo">${tiposLabel[a.tipo] || a.tipo}</span>
+                    <span>${formatearFecha(a.creada_en)}</span>
+                </div>
+            </div>
+            <button class="btn-resolver" onclick="resolverAlerta(${a.id})">
+                ✓ Resolver
+            </button>
+        </div>
+    `).join('');
+}
+
+async function resolverAlerta(id) {
+    const res = await fetch(`${API}/alertas/${id}/resolver`, { method: 'PATCH' });
+    if (res.ok) {
+        delete alertasActivas[id];
+        renderizarAlertas();
+
+        // Animación de salida
+        const el = document.getElementById(`alerta-${id}`);
+        if (el) {
+            el.style.opacity = '0';
+            el.style.transform = 'translateX(20px)';
+            el.style.transition = 'all 0.3s ease';
+        }
+    }
+}
+
+async function forzarEvaluacion() {
+    // Recarga alertas actuales desde la API y reconecta WS
+    const res = await fetch(`${API}/alertas/?solo_activas=true`);
+    const alertas = await res.json();
+    alertasActivas = {};
+    alertas.forEach(a => { alertasActivas[a.id] = a; });
+    renderizarAlertas();
+    mostrarToast('Evaluación completada');
+}
+
+function mostrarToastAlerta(alerta) {
+    const colores = {
+        critica: 'var(--danger)',
+        advertencia: 'var(--warning)',
+        info: 'var(--info)'
+    };
+    const toast = document.getElementById('toast');
+    toast.textContent = `⚠️ ${alerta.mensaje}`;
+    toast.style.borderLeftColor = colores[alerta.severidad] || 'var(--warning)';
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 5000);
+}
+
+function formatearFecha(isoString) {
+    const d = new Date(isoString);
+    return d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+}
+
+// Iniciar WebSocket al cargar
+conectarWebSocket();

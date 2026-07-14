@@ -16,24 +16,24 @@ class Orden(Base):
     __tablename__ = "ordenes"
 
     id = Column(Integer, primary_key=True, index=True)
-    numero_orden = Column(String(30), unique=True, nullable=False)  # Ej: "ORD-2024-001"
-    producto = Column(String(100), nullable=False)                   # Ej: "Acura ADX - Carrocería"
+    numero_orden = Column(String(30), unique=True, nullable=False)
+    producto = Column(String(100), nullable=False)
     unidades_objetivo = Column(Integer, nullable=False)
     unidades_producidas = Column(Integer, default=0)
     unidades_defectuosas = Column(Integer, default=0)
     estado = Column(Enum(EstadoOrden), default=EstadoOrden.PENDIENTE)
-    turno = Column(String(20), nullable=False)                       # "Matutino", "Vespertino", "Nocturno"
+    turno = Column(String(20), nullable=False)
     fecha_inicio = Column(DateTime, nullable=True)
     fecha_fin = Column(DateTime, nullable=True)
     creada_en = Column(DateTime, default=datetime.utcnow)
 
-    # Llave foránea a Maquina
+    # Relacion con Maquina
     maquina_id = Column(Integer, ForeignKey("maquinas.id"), nullable=False)
     maquina = relationship("Maquina", back_populates="ordenes")
 
     @property
     def eficiencia(self):
-        """Porcentaje de unidades buenas sobre objetivo."""
+        """Calcular porcentaje de eficiencia"""
         if self.unidades_objetivo == 0:
             return 0.0
         buenas = self.unidades_producidas - self.unidades_defectuosas

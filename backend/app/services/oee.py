@@ -9,23 +9,14 @@ def calcular_oee(
     unidades_defectuosas: int
 ) -> dict:
     """
-    Calcula el OEE (Overall Equipment Effectiveness).
-
-    OEE = Disponibilidad × Rendimiento × Calidad
-
-    Valores ideales en manufactura de clase mundial: OEE > 85%
-    Honda apunta a OEE > 90% en sus plantas.
+    Calcula el OEE (Disponibilidad * Rendimiento * Calidad)
     """
-
-    # Disponibilidad = (Tiempo disponible - Tiempo paro) / Tiempo disponible
     tiempo_operativo = tiempo_disponible_min - tiempo_paro_min
     disponibilidad = (tiempo_operativo / tiempo_disponible_min) if tiempo_disponible_min > 0 else 0
 
-    # Rendimiento = Unidades producidas / Unidades objetivo
     rendimiento = (unidades_producidas / unidades_objetivo) if unidades_objetivo > 0 else 0
-    rendimiento = min(rendimiento, 1.0)  # No puede superar 100%
+    rendimiento = min(rendimiento, 1.0)
 
-    # Calidad = Unidades buenas / Unidades producidas
     unidades_buenas = unidades_producidas - unidades_defectuosas
     calidad = (unidades_buenas / unidades_producidas) if unidades_producidas > 0 else 0
 

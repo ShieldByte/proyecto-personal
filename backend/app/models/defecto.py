@@ -8,7 +8,7 @@ class Defecto(Base):
     __tablename__ = "defectos"
 
     id = Column(Integer, primary_key=True, index=True)
-    tipo = Column(String(100), nullable=False)       # Ej: "Soldadura incompleta"
+    tipo = Column(String(100), nullable=False)
     descripcion = Column(Text, nullable=True)
     cantidad = Column(Integer, default=1)
     registrado_en = Column(DateTime, default=datetime.utcnow)

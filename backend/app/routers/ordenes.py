@@ -28,7 +28,12 @@ def obtener_orden(orden_id: int, db: Session = Depends(get_db)):
 @router.post("/", response_model=OrdenResponse, status_code=status.HTTP_201_CREATED)
 def crear_orden(orden: OrdenCreate, db: Session = Depends(get_db)):
     """Crea una nueva orden de producción."""
-    # Verificar que la máquina existe
+    # validar que el número de orden no esté duplicado
+    existente = db.query(Orden).filter(Orden.numero_orden == orden.numero_orden).first()
+    if existente:
+        raise HTTPException(status_code=400, detail="Ya existe una orden con este número de orden")
+
+    # validar que la maquina exista
     maquina = db.query(Maquina).filter(Maquina.id == orden.maquina_id).first()
     if not maquina:
         raise HTTPException(status_code=404, detail="Máquina no encontrada")
@@ -49,11 +54,11 @@ def actualizar_orden(orden_id: int, datos: OrdenUpdate, db: Session = Depends(ge
 
     update_data = datos.model_dump(exclude_unset=True)
 
-    # Si se marca como en proceso, registrar fecha de inicio
+    # poner fecha de inicio si empieza
     if update_data.get("estado") == EstadoOrden.EN_PROCESO and not orden.fecha_inicio:
         update_data["fecha_inicio"] = datetime.utcnow()
 
-    # Si se completa, registrar fecha de fin
+    # poner fecha de fin si termina
     if update_data.get("estado") == EstadoOrden.COMPLETADA and not orden.fecha_fin:
         update_data["fecha_fin"] = datetime.utcnow()
 

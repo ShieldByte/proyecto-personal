@@ -1,13 +1,16 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# Base de datos SQLite local (archivo mes.db en la raíz del backend)
-DATABASE_URL = "sqlite:///./mes.db"
+# conexion sqlite usando la ruta absoluta
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE_PATH = os.path.join(os.path.dirname(BASE_DIR), "mes.db")
+DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
 
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False}  # Necesario para SQLite con FastAPI
+    connect_args={"check_same_thread": False} # para sqlite
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -16,7 +19,7 @@ Base = declarative_base()
 
 
 def get_db():
-    """Dependencia que provee una sesión de BD por request."""
+    """Abrir sesion de base de datos"""
     db = SessionLocal()
     try:
         yield db

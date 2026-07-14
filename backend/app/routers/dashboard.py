@@ -18,7 +18,7 @@ def resumen_dashboard(db: Session = Depends(get_db)):
     ordenes_en_proceso = db.query(Orden).filter(Orden.estado == EstadoOrden.EN_PROCESO).count()
     ordenes_completadas = db.query(Orden).filter(Orden.estado == EstadoOrden.COMPLETADA).count()
 
-    # Totales de producción
+    # sumar totales
     totales = db.query(
         func.sum(Orden.unidades_objetivo).label("objetivo"),
         func.sum(Orden.unidades_producidas).label("producidas"),
@@ -29,10 +29,10 @@ def resumen_dashboard(db: Session = Depends(get_db)):
     producidas = totales.producidas or 0
     defectuosas = totales.defectuosas or 0
 
-    # OEE global simplificado (sin tiempo de paro por ahora)
+    # calcular oee global (turno de 8 horas y 30 min de descanso)
     oee_global = calcular_oee(
-        tiempo_disponible_min=480,   # Turno de 8 horas
-        tiempo_paro_min=30,          # 30 min de paro estimado
+        tiempo_disponible_min=480,
+        tiempo_paro_min=30,
         unidades_objetivo=objetivo,
         unidades_producidas=producidas,
         unidades_defectuosas=defectuosas

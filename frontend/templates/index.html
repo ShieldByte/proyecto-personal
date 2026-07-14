@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MES — Honda Celaya</title>
+    <title>Sistema MES</title>
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
@@ -11,9 +11,9 @@
 <!-- NAVBAR -->
 <nav class="navbar">
     <div class="navbar-brand">
-        <div class="logo">H</div>
+        <div class="logo">M</div>
         <div>
-            <h1>MES Honda Celaya</h1>
+            <h1>Sistema MES</h1>
             <span>Sistema de Ejecución de Manufactura</span>
         </div>
     </div>
@@ -23,7 +23,7 @@
             <span id="last-update">Conectando...</span>
         </div>
         <button class="btn-refresh" onclick="cargarDashboard();cargarOrdenes()">
-            ↻ Refrescar
+            Refrescar
         </button>
     </div>
 </nav>
@@ -37,37 +37,31 @@
             <div class="kpi-label">Total Órdenes</div>
             <div class="kpi-value" id="kpi-total">—</div>
             <div class="kpi-sub">registradas en el sistema</div>
-            <div class="kpi-icon">📋</div>
         </div>
         <div class="kpi-card orange">
             <div class="kpi-label">En Proceso</div>
             <div class="kpi-value" id="kpi-proceso">—</div>
             <div class="kpi-sub">órdenes activas ahora</div>
-            <div class="kpi-icon">⚙️</div>
         </div>
         <div class="kpi-card green">
             <div class="kpi-label">Completadas</div>
             <div class="kpi-value" id="kpi-completadas">—</div>
             <div class="kpi-sub">órdenes finalizadas</div>
-            <div class="kpi-icon">✅</div>
         </div>
         <div class="kpi-card green">
             <div class="kpi-label">Unidades Producidas</div>
             <div class="kpi-value" id="kpi-producidas">—</div>
             <div class="kpi-sub">total acumulado</div>
-            <div class="kpi-icon">🏭</div>
         </div>
         <div class="kpi-card blue">
             <div class="kpi-label">Unidades Buenas</div>
             <div class="kpi-value" id="kpi-buenas">—</div>
             <div class="kpi-sub">aprobadas en calidad</div>
-            <div class="kpi-icon">⭐</div>
         </div>
         <div class="kpi-card red">
             <div class="kpi-label">Defectos</div>
             <div class="kpi-value" id="kpi-defectos">—</div>
             <div class="kpi-sub">unidades rechazadas</div>
-            <div class="kpi-icon">⚠️</div>
         </div>
     </div>
 
@@ -148,6 +142,34 @@
         </div>
     </div>
 
+    <!-- PANEL DE ALERTAS -->
+<div class="alertas-header" style="margin-top:2rem">
+    <p class="section-title" style="margin:0">
+        Sistema de Alertas
+        <span class="badge-contador" id="badge-alertas">0</span>
+    </p>
+    <div class="ws-status">
+        <div class="ws-dot" id="ws-dot"></div>
+        <span id="ws-estado">Conectando...</span>
+    </div>
+</div>
+
+<div class="table-card" style="margin-bottom:2rem">
+    <div class="table-header">
+        <h3>Alertas Activas</h3>
+        <button class="btn-new"
+            style="background:transparent;border:1px solid var(--border);color:var(--text-secondary)"
+            onclick="forzarEvaluacion()">
+            ⚡ Evaluar ahora
+        </button>
+    </div>
+    <div style="padding:1rem">
+        <div class="alertas-lista" id="alertas-lista">
+            <div class="alertas-vacio">Cargando alertas...</div>
+        </div>
+    </div>
+
+    
 </div>
 
 <!-- MODAL: NUEVA ORDEN -->

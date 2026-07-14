@@ -2,8 +2,10 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 from app.models.orden import EstadoOrden
+from app.models.alerta import SeveridadAlerta, TipoAlerta
 
-# Esquemas Maquina
+
+# --- Esquemas para Máquina ---
 
 class MaquinaBase(BaseModel):
     codigo: str = Field(..., example="EST-01")
@@ -22,11 +24,11 @@ class MaquinaResponse(MaquinaBase):
         from_attributes = True
 
 
-# Esquemas Orden
+# --- Esquemas para Orden ---
 
 class OrdenBase(BaseModel):
     numero_orden: str = Field(..., example="ORD-2024-001")
-    producto: str = Field(..., example="Panel Lateral")
+    producto: str = Field(..., example="Acura ADX - Carrocería")
     unidades_objetivo: int = Field(..., gt=0)
     turno: str = Field(..., example="Matutino")
     maquina_id: int
@@ -53,7 +55,7 @@ class OrdenResponse(OrdenBase):
         from_attributes = True
 
 
-# Esquemas Defecto
+# --- Esquema para Defecto ---
 
 class DefectoCreate(BaseModel):
     tipo: str = Field(..., example="Soldadura incompleta")
@@ -64,6 +66,21 @@ class DefectoCreate(BaseModel):
 class DefectoResponse(DefectoCreate):
     id: int
     registrado_en: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class AlertaResponse(BaseModel):
+    id: int
+    tipo: TipoAlerta
+    severidad: SeveridadAlerta
+    mensaje: str
+    detalle: Optional[str]
+    resuelta: bool
+    orden_id: Optional[int]
+    creada_en: datetime
+    resuelta_en: Optional[datetime]
 
     class Config:
         from_attributes = True
