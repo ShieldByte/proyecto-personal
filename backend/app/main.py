@@ -7,6 +7,8 @@ from fastapi.responses import HTMLResponse
 from contextlib import asynccontextmanager
 import asyncio
 import os
+from app.routers.reportes import router as reportes_router
+
 
 from app.database import engine, Base
 from app.routers import ordenes, maquinas, dashboard
@@ -54,6 +56,7 @@ app.include_router(ordenes.router)
 app.include_router(maquinas.router)
 app.include_router(dashboard.router)
 app.include_router(alertas_router)
+app.include_router(reportes_router)
 
 
 @app.get("/", response_class=HTMLResponse)

@@ -523,3 +523,87 @@ function formatearFecha(isoString) {
 
 // Iniciar WebSocket al cargar
 conectarWebSocket();
+
+// ===== REPORTES =====
+
+// Setear fecha de hoy por defecto al cargar
+document.addEventListener('DOMContentLoaded', () => {
+    const hoy = new Date().toISOString().split('T')[0];
+    const inp = document.getElementById('rep-fecha');
+    if (inp) inp.value = hoy;
+});
+
+function getParamsReporte() {
+    const turno = document.getElementById('rep-turno').value;
+    const fecha = document.getElementById('rep-fecha').value;
+    return { turno, fecha };
+}
+
+async function previsualizarReporte() {
+    const { turno, fecha } = getParamsReporte();
+    const res = await fetch(`${API}/reportes/turno?turno=${turno}&fecha=${fecha}`);
+    const datos = await res.json();
+
+    const panel = document.getElementById('preview-reporte');
+    const contenido = document.getElementById('preview-contenido');
+    panel.style.display = 'block';
+
+    const oee = datos.oee;
+    const t = datos.totales;
+
+    const badgeColor = {
+        'Clase Mundial': '#00d4aa', 'Aceptable': '#f4a261',
+        'Regular': '#e63946', 'Crítico': '#e63946', 'Sin datos': '#666'
+    }[oee.clasificacion] || '#666';
+
+    contenido.innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem;margin-bottom:1rem">
+            ${[
+                ['Órdenes',        datos.total_ordenes,       'var(--info)'],
+                ['Completadas',    datos.ordenes_completadas, 'var(--success)'],
+                ['Obj. Unidades',  t.objetivo,                'var(--text-primary)'],
+                ['Producidas',     t.producidas,              'var(--text-primary)'],
+                ['Buenas',         t.buenas,                  'var(--success)'],
+                ['Defectuosas',    t.defectuosas,             'var(--danger)'],
+                ['Cumplimiento',   t.cumplimiento + '%',      t.cumplimiento >= 90 ? 'var(--success)' : 'var(--warning)'],
+                ['OEE',            oee.oee + '%',             badgeColor],
+            ].map(([label, val, color]) => `
+                <div style="background:rgba(255,255,255,0.04);border-radius:8px;
+                    padding:0.75rem;border:1px solid var(--border)">
+                    <div style="font-size:0.7rem;color:var(--text-secondary);
+                        text-transform:uppercase;letter-spacing:0.5px">${label}</div>
+                    <div style="font-size:1.3rem;font-weight:800;color:${color};
+                        margin-top:0.2rem">${val}</div>
+                </div>
+            `).join('')}
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;
+            font-size:0.8rem;color:var(--text-secondary)">
+            <span>📊 Disponibilidad: <strong style="color:var(--info)">${oee.disponibilidad}%</strong></span>
+            <span>⚙️ Rendimiento: <strong style="color:var(--warning)">${oee.rendimiento}%</strong></span>
+            <span>✅ Calidad: <strong style="color:var(--success)">${oee.calidad}%</strong></span>
+            <span>🏷 Clasificación: <strong style="color:${badgeColor}">${oee.clasificacion}</strong></span>
+        </div>
+
+        ${datos.alertas.length > 0 ? `
+        <div style="margin-top:0.75rem;font-size:0.8rem;color:var(--warning)">
+            ⚠️ ${datos.alertas.length} alerta(s) registrada(s) en este turno
+        </div>` : `
+        <div style="margin-top:0.75rem;font-size:0.8rem;color:var(--success)">
+            ✅ Sin alertas en este turno
+        </div>`}
+    `;
+}
+
+function exportarReporte(tipo) {
+    const { turno, fecha } = getParamsReporte();
+    const url = `${API}/reportes/exportar/${tipo}?turno=${turno}&fecha=${fecha}`;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    mostrarToast(`Generando reporte ${tipo.toUpperCase()}...`);
+}
